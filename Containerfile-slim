@@ -1,0 +1,31 @@
+# https://github.com/awesome-containers/static-bash
+ARG STATIC_BASH_VERSION=5.2.15
+ARG STATIC_BASH_IMAGE=ghcr.io/awesome-containers/static-bash
+
+# https://github.com/awesome-containers/static-rsync
+ARG STATIC_RSYNC_VERSION=3.2.7
+ARG STATIC_RSYNC_IMAGE=ghcr.io/awesome-containers/static-rsync
+
+# https://github.com/awesome-containers/alpine-build-essential
+ARG BUILD_ESSENTIAL_VERSION=3.17
+ARG BUILD_ESSENTIAL_IMAGE=ghcr.io/awesome-containers/alpine-build-essential
+
+
+FROM $STATIC_BASH_IMAGE:$STATIC_BASH_VERSION-slim AS static-bash
+FROM $STATIC_RSYNC_IMAGE:$STATIC_RSYNC_VERSION AS static-rsync
+FROM $BUILD_ESSENTIAL_IMAGE:$BUILD_ESSENTIAL_VERSION AS build
+
+WORKDIR /src/rsync
+COPY --from=static-rsync /bin/rsync /bin/rsync-ssl ./
+
+RUN set -xeu; \
+    upx --no-progress --no-color rsync; \
+    upx -t --no-progress --no-color rsync; \
+    chmod -cR 755 rsync; \
+    chown -cR 0:0 rsync; \
+    ! ldd rsync && :; \
+    ./rsync -V
+
+# slim static rsync image
+FROM static-bash
+COPY --from=build /src/rsync/ /bin/
