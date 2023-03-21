@@ -32,7 +32,8 @@ RUN set -xeu; \
     chmod -cR 755 rsync; \
     chown -cR 0:0 rsync; \
     ! ldd rsync && :; \
-    ./rsync -V
+    ./rsync -V; \
+    sed '1 s|!/.*|!/bin/bash|' -i rsync-ssl
 
 # static rsync image
 FROM static-bash
